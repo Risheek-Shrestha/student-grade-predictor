@@ -20,6 +20,16 @@ st.set_page_config(
 model = joblib.load("student_model.pkl")
 
 # ==========================================
+# SESSION STATE
+# ==========================================
+
+if "predicted" not in st.session_state:
+    st.session_state.predicted = False
+
+if "prediction_data" not in st.session_state:
+    st.session_state.prediction_data = {}
+
+# ==========================================
 # CSS
 # ==========================================
 
@@ -30,20 +40,18 @@ st.markdown("""
 footer {visibility: hidden;}
 header {visibility: hidden;}
 
-/* ---- Base ---- */
 html, body, .stApp {
     background: #0a0f1e !important;
     color: #e2e8f0;
     font-family: 'Inter', 'Segoe UI', sans-serif;
 }
 
-/* ---- Hide default padding ---- */
 .block-container {
     padding: 2rem 1.5rem 4rem !important;
     max-width: 860px !important;
 }
 
-/* ---- Hero ---- */
+/* Hero */
 .hero {
     background: linear-gradient(135deg, #1e3a8a 0%, #4c1d95 100%);
     border-radius: 24px;
@@ -59,10 +67,8 @@ html, body, .stApp {
 .hero::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
     background: radial-gradient(circle at 30% 50%, rgba(99,102,241,0.15) 0%, transparent 60%);
     pointer-events: none;
 }
@@ -94,7 +100,7 @@ html, body, .stApp {
     text-transform: uppercase;
 }
 
-/* ---- Section label ---- */
+/* Section label */
 .section-label {
     font-size: 0.7rem;
     font-weight: 700;
@@ -104,21 +110,7 @@ html, body, .stApp {
     margin: 28px 0 12px 0;
 }
 
-/* ---- Input card ---- */
-.input-card {
-    background: #111827;
-    border: 1px solid #1f2937;
-    border-radius: 20px;
-    padding: 24px;
-    margin-bottom: 16px;
-    transition: border-color 0.2s;
-}
-
-.input-card:hover {
-    border-color: #374151;
-}
-
-/* ---- Predict button ---- */
+/* Predict button */
 .stButton > button {
     width: 100% !important;
     background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
@@ -130,9 +122,9 @@ html, body, .stApp {
     font-weight: 700 !important;
     letter-spacing: 0.5px !important;
     cursor: pointer !important;
-    transition: all 0.2s !important;
     box-shadow: 0 4px 20px rgba(99,102,241,0.4) !important;
     margin: 8px 0 !important;
+    transition: all 0.2s !important;
 }
 
 .stButton > button:hover {
@@ -140,7 +132,7 @@ html, body, .stApp {
     box-shadow: 0 8px 30px rgba(99,102,241,0.5) !important;
 }
 
-/* ---- Result card ---- */
+/* Result card */
 .result-card {
     background: linear-gradient(135deg, #0f172a, #1e1b4b);
     border: 1px solid rgba(99,102,241,0.4);
@@ -177,27 +169,28 @@ html, body, .stApp {
     flex-wrap: wrap;
 }
 
-.badge {
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-
-.badge-grade {
-    background: rgba(99,102,241,0.2);
-    border: 1px solid rgba(99,102,241,0.4);
-    color: #a5b4fc;
-}
-
+.badge { padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+.badge-grade { background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.4); color: #a5b4fc; }
 .badge-low { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
 .badge-medium { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; }
 .badge-high { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
 
-/* ---- Summary card ---- */
+/* Feedback */
+.feedback-box {
+    border-radius: 14px;
+    padding: 16px 20px;
+    font-size: 0.9rem;
+    margin: 16px 0;
+    line-height: 1.6;
+}
+.feedback-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); color: #86efac; }
+.feedback-warning { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: #fde68a; }
+.feedback-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
+
+/* Summary grid */
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 12px;
     margin: 16px 0;
 }
@@ -223,34 +216,7 @@ html, body, .stApp {
     color: #e2e8f0;
 }
 
-/* ---- Feedback ---- */
-.feedback-box {
-    border-radius: 14px;
-    padding: 16px 20px;
-    font-size: 0.9rem;
-    margin: 16px 0;
-    line-height: 1.6;
-}
-
-.feedback-success {
-    background: rgba(34,197,94,0.1);
-    border: 1px solid rgba(34,197,94,0.25);
-    color: #86efac;
-}
-
-.feedback-warning {
-    background: rgba(245,158,11,0.1);
-    border: 1px solid rgba(245,158,11,0.25);
-    color: #fde68a;
-}
-
-.feedback-error {
-    background: rgba(239,68,68,0.1);
-    border: 1px solid rgba(239,68,68,0.25);
-    color: #fca5a5;
-}
-
-/* ---- Model stats ---- */
+/* Model stats */
 .stats-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -266,25 +232,10 @@ html, body, .stApp {
     text-align: center;
 }
 
-.stat-value {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #818cf8;
-}
+.stat-value { font-size: 1.5rem; font-weight: 800; color: #818cf8; }
+.stat-label { font-size: 0.72rem; color: #6b7280; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-.stat-label {
-    font-size: 0.72rem;
-    color: #6b7280;
-    margin-top: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* ---- Slider & select overrides ---- */
-.stSlider [data-baseweb="slider"] {
-    padding: 8px 0;
-}
-
+/* Inputs */
 div[data-baseweb="select"] > div {
     background: #1f2937 !important;
     border-color: #374151 !important;
@@ -292,136 +243,125 @@ div[data-baseweb="select"] > div {
     color: #e2e8f0 !important;
 }
 
-/* ---- Footer ---- */
+label, .stSlider label, .stSelectbox label {
+    color: #9ca3af !important;
+    font-size: 0.875rem !important;
+}
+
+/* Footer */
 .footer {
     text-align: center;
     padding: 32px 0 8px;
     color: #374151;
     font-size: 0.8rem;
 }
+.footer a { color: #6366f1; text-decoration: none; }
 
-.footer a {
-    color: #6366f1;
-    text-decoration: none;
-}
-
-/* ---- Divider ---- */
-hr {
-    border-color: #1f2937 !important;
-    margin: 24px 0 !important;
-}
-
-/* ---- Slider label color ---- */
-label, .stSlider label, .stSelectbox label {
-    color: #9ca3af !important;
-    font-size: 0.875rem !important;
-}
+hr { border-color: #1f2937 !important; margin: 24px 0 !important; }
 
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# HERO
+# HERO — always visible
 # ==========================================
 
 st.markdown("""
 <div class="hero">
     <div class="hero-badge">🤖 Random Forest · R² 0.83</div>
     <h1>🎓 Student Performance Analytics</h1>
-    <p>Enter student details below to predict the final grade using machine learning</p>
+    <p>Enter student details to predict the final grade using machine learning</p>
 </div>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# MODEL STATS
+# STATE 1 — INPUT FORM
 # ==========================================
 
-st.markdown("""
-<div class="stats-row">
-    <div class="stat-box">
-        <div class="stat-value">0.83</div>
-        <div class="stat-label">R² Score</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-value">1.11</div>
-        <div class="stat-label">MAE</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-value">395</div>
-        <div class="stat-label">Students</div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+if not st.session_state.predicted:
 
-# ==========================================
-# INPUT SECTION
-# ==========================================
+    # Model stats
+    st.markdown("""
+    <div class="stats-row">
+        <div class="stat-box"><div class="stat-value">0.83</div><div class="stat-label">R² Score</div></div>
+        <div class="stat-box"><div class="stat-value">1.11</div><div class="stat-label">MAE</div></div>
+        <div class="stat-box"><div class="stat-value">395</div><div class="stat-label">Students</div></div>
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown('<div class="section-label">📝 Academic Grades</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">📝 Academic Grades</div>', unsafe_allow_html=True)
 
-with st.container():
     col1, col2 = st.columns(2)
     with col1:
-        g1 = st.slider("G1 — First Period Grade", 0, 20, 10,
-                       help="Student grade in first period (0–20)")
+        g1 = st.slider("G1 — First Period Grade", 0, 20, 10)
     with col2:
-        g2 = st.slider("G2 — Second Period Grade", 0, 20, 10,
-                       help="Student grade in second period (0–20)")
+        g2 = st.slider("G2 — Second Period Grade", 0, 20, 10)
 
-st.markdown('<div class="section-label">📚 Study Habits</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">📚 Study Habits</div>', unsafe_allow_html=True)
 
-col3, col4 = st.columns(2)
-with col3:
-    studytime = st.selectbox(
-        "Weekly Study Time",
-        options=[1, 2, 3, 4],
-        format_func=lambda x: {
-            1: "1 — Less than 2 hrs/week",
-            2: "2 — 2 to 5 hrs/week",
-            3: "3 — 5 to 10 hrs/week",
-            4: "4 — More than 10 hrs/week"
-        }[x]
-    )
-with col4:
-    failures = st.selectbox(
-        "Number of Past Failures",
-        options=[0, 1, 2, 3, 4],
-        format_func=lambda x: f"{x} failure{'s' if x != 1 else ''}"
-    )
+    col3, col4 = st.columns(2)
+    with col3:
+        studytime = st.selectbox(
+            "Weekly Study Time",
+            options=[1, 2, 3, 4],
+            format_func=lambda x: {
+                1: "1 — Less than 2 hrs/week",
+                2: "2 — 2 to 5 hrs/week",
+                3: "3 — 5 to 10 hrs/week",
+                4: "4 — More than 10 hrs/week"
+            }[x]
+        )
+    with col4:
+        failures = st.selectbox(
+            "Number of Past Failures",
+            options=[0, 1, 2, 3, 4],
+            format_func=lambda x: f"{x} failure{'s' if x != 1 else ''}"
+        )
 
-st.markdown('<div class="section-label">👨‍👩‍👦 Family Background</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">👨‍👩‍👦 Family Background</div>', unsafe_allow_html=True)
 
-col5, col6 = st.columns(2)
+    edu_labels = {
+        0: "0 — No education",
+        1: "1 — Primary school",
+        2: "2 — Middle school",
+        3: "3 — Secondary school",
+        4: "4 — Higher education"
+    }
 
-edu_labels = {
-    0: "0 — No education",
-    1: "1 — Primary school",
-    2: "2 — Middle school",
-    3: "3 — Secondary school",
-    4: "4 — Higher education"
-}
+    col5, col6 = st.columns(2)
+    with col5:
+        medu = st.selectbox("Mother's Education", options=[0,1,2,3,4],
+                            format_func=lambda x: edu_labels[x])
+    with col6:
+        fedu = st.selectbox("Father's Education", options=[0,1,2,3,4],
+                            format_func=lambda x: edu_labels[x])
 
-with col5:
-    medu = st.selectbox("Mother's Education", options=[0,1,2,3,4],
-                        format_func=lambda x: edu_labels[x])
-with col6:
-    fedu = st.selectbox("Father's Education", options=[0,1,2,3,4],
-                        format_func=lambda x: edu_labels[x])
+    st.markdown("<br>", unsafe_allow_html=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🚀 Predict Final Grade"):
+        # Save to session state
+        st.session_state.predicted = True
+        st.session_state.prediction_data = {
+            "g1": g1, "g2": g2,
+            "studytime": studytime,
+            "failures": failures,
+            "medu": medu, "fedu": fedu
+        }
+        st.rerun()
 
 # ==========================================
-# PREDICT BUTTON
+# STATE 2 — RESULTS
 # ==========================================
 
-predict = st.button("🚀 Predict Final Grade")
+else:
 
-# ==========================================
-# RESULTS
-# ==========================================
+    # Retrieve saved inputs
+    d = st.session_state.prediction_data
+    g1 = d["g1"]; g2 = d["g2"]
+    studytime = d["studytime"]; failures = d["failures"]
+    medu = d["medu"]; fedu = d["fedu"]
 
-if predict:
-
+    # Predict
     input_data = np.array([[g2, g1, failures, studytime, medu, fedu]])
     prediction = round(float(model.predict(input_data)[0]), 2)
     percentage = min(int((prediction / 20) * 100), 100)
@@ -509,7 +449,6 @@ if predict:
                 }
             }
         ))
-
         gauge.update_layout(
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
@@ -517,7 +456,6 @@ if predict:
             height=260,
             margin=dict(t=40, b=20, l=30, r=30)
         )
-
         st.plotly_chart(gauge, use_container_width=True)
 
     with chart_right:
@@ -529,7 +467,6 @@ if predict:
             fillcolor="rgba(99,102,241,0.2)",
             line=dict(color="#818cf8", width=2),
         ))
-
         radar.update_layout(
             polar=dict(
                 bgcolor="rgba(0,0,0,0)",
@@ -551,7 +488,6 @@ if predict:
             height=260,
             margin=dict(t=30, b=30, l=40, r=40)
         )
-
         st.plotly_chart(radar, use_container_width=True)
 
     # Input Summary
@@ -588,6 +524,14 @@ if predict:
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Back button
+    if st.button("← Predict Again"):
+        st.session_state.predicted = False
+        st.session_state.prediction_data = {}
+        st.rerun()
 
 # ==========================================
 # FOOTER
