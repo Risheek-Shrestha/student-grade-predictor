@@ -1,82 +1,103 @@
 import streamlit as st
 import joblib
 import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
 
-# Load model
-model = joblib.load('student_model.pkl')
-
+# -----------------------------
 # Page Config
+# -----------------------------
 st.set_page_config(
     page_title="Student Grade Predictor",
     page_icon="🎓",
-    layout="centered"
+    layout="wide"
 )
 
-st.title("🎓 Student Grade Predictor")
-st.write("Predict the Final Grade (G3) using academic and student-related factors.")
+# -----------------------------
+# Custom CSS
+# -----------------------------
+st.markdown("""
+<style>
+.main-title{
+    text-align:center;
+    font-size:3rem;
+    font-weight:bold;
+    color:#4CAF50;
+}
+.sub-title{
+    text-align:center;
+    font-size:1.1rem;
+    color:gray;
+    margin-bottom:30px;
+}
+</style>
+""", unsafe_allow_html=True)
 
-st.divider()
+# -----------------------------
+# Load Model
+# -----------------------------
+model = joblib.load("student_model.pkl")
 
-# Inputs
+# -----------------------------
+# Header
+# -----------------------------
+st.markdown(
+    '<div class="main-title">🎓 Student Grade Predictor</div>',
+    unsafe_allow_html=True
+)
 
-g2 = st.slider(
+st.markdown(
+    '<div class="sub-title">Predict the final student grade (G3) using Machine Learning</div>',
+    unsafe_allow_html=True
+)
+
+# -----------------------------
+# Sidebar Inputs
+# -----------------------------
+st.sidebar.header("📋 Student Information")
+
+g2 = st.sidebar.slider(
     "G2 (Second Period Grade)",
-    min_value=0,
-    max_value=20,
-    value=10
+    0, 20, 10
 )
 
-g1 = st.slider(
+g1 = st.sidebar.slider(
     "G1 (First Period Grade)",
-    min_value=0,
-    max_value=20,
-    value=10
+    0, 20, 10
 )
 
-failures = st.selectbox(
+failures = st.sidebar.selectbox(
     "Number of Past Failures",
     [0, 1, 2, 3, 4]
 )
 
-studytime = st.selectbox(
+studytime = st.sidebar.selectbox(
     "Study Time",
     [1, 2, 3, 4],
     help="""
-1 = Less than 2 hours/week
-2 = 2-5 hours/week
-3 = 5-10 hours/week
-4 = More than 10 hours/week
+1 = Less than 2 hrs/week
+2 = 2–5 hrs/week
+3 = 5–10 hrs/week
+4 = More than 10 hrs/week
 """
 )
 
-medu = st.selectbox(
+medu = st.sidebar.selectbox(
     "Mother's Education",
-    [0, 1, 2, 3, 4],
-    help="""
-0 = None
-1 = Primary Education
-2 = 5th to 9th Grade
-3 = Secondary Education
-4 = Higher Education
-"""
+    [0, 1, 2, 3, 4]
 )
 
-fedu = st.selectbox(
+fedu = st.sidebar.selectbox(
     "Father's Education",
-    [0, 1, 2, 3, 4],
-    help="""
-0 = None
-1 = Primary Education
-2 = 5th to 9th Grade
-3 = Secondary Education
-4 = Higher Education
-"""
+    [0, 1, 2, 3, 4]
 )
 
-st.divider()
+predict_btn = st.sidebar.button("🚀 Predict Grade")
 
-
-if st.button("Predict Final Grade"):
+# -----------------------------
+# Main Area
+# -----------------------------
+if predict_btn:
 
     input_data = np.array([
         [
@@ -91,16 +112,140 @@ if st.button("Predict Final Grade"):
 
     prediction = model.predict(input_data)[0]
 
-    st.success(
-        f"Predicted Final Grade (G3): {prediction:.2f}"
+    # Grade Category
+    if prediction >= 16:
+        grade = "A"
+        remark = "Excellent Performance"
+    elif prediction >= 14:
+        grade = "B"
+        remark = "Very Good Performance"
+    elif prediction >= 10:
+        grade = "C"
+        remark = "Average Performance"
+    else:
+        grade = "D"
+        remark = "Needs Improvement"
+
+    # -----------------------------
+    # Top Metrics
+    # -----------------------------
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "Predicted Grade",
+            f"{prediction:.2f}/20"
+        )
+
+    with col2:
+        st.metric(
+            "Grade Category",
+            grade
+        )
+
+    with col3:
+        st.metric(
+            "Performance",
+            remark
+        )
+
+    st.divider()
+
+    # -----------------------------
+    # Gauge Chart
+    # -----------------------------
+    gauge = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=float(prediction),
+        title={'text': "Predicted Final Grade"},
+        gauge={
+            'axis': {'range': [0, 20]},
+            'bar': {'color': "green"},
+            'steps': [
+                {'range': [0, 8], 'color': "#ffcccc"},
+                {'range': [8, 12], 'color': "#fff3cd"},
+                {'range': [12, 16], 'color': "#d4edda"},
+                {'range': [16, 20], 'color': "#a8e6a3"}
+            ]
+        }
+    ))
+
+    st.plotly_chart(
+        gauge,
+        use_container_width=True
     )
 
     if prediction >= 16:
         st.balloons()
-        st.info("Excellent predicted performance.")
-    elif prediction >= 12:
-        st.info("Good predicted performance.")
-    elif prediction >= 8:
-        st.warning("Average predicted performance.")
-    else:
-        st.error("Low predicted performance. Additional study effort may be required.")
+
+# -----------------------------
+# Tabs
+# -----------------------------
+tab1, tab2, tab3 = st.tabs(
+    ["📊 Features Used", "🤖 About Model", "ℹ️ About Project"]
+)
+
+with tab1:
+
+    feature_df = pd.DataFrame({
+        "Feature": [
+            "G2",
+            "G1",
+            "Failures",
+            "Study Time",
+            "Mother Education",
+            "Father Education"
+        ]
+    })
+
+    st.dataframe(
+        feature_df,
+        use_container_width=True
+    )
+
+with tab2:
+
+    st.markdown("""
+### Random Forest Regressor
+
+This project uses a Random Forest Regression model to predict
+the final grade (G3).
+
+**Features Used**
+- G2
+- G1
+- Failures
+- Study Time
+- Mother's Education
+- Father's Education
+
+**Evaluation Metrics**
+- Mean Absolute Error (MAE)
+- R² Score
+
+Random Forest was selected because it produced the best prediction performance among the tested models.
+""")
+
+with tab3:
+
+    st.markdown("""
+### Student Grade Predictor
+
+This machine learning project predicts a student's final academic grade (G3).
+
+### Technologies Used
+- Python
+- Streamlit
+- Scikit-Learn
+- Pandas
+- NumPy
+- Plotly
+
+### Models Tested
+- Linear Regression
+- K-Nearest Neighbors
+- Random Forest Regressor
+
+### Developed By
+Risheek Shrestha
+""")
