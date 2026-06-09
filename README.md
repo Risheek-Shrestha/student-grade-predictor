@@ -63,6 +63,9 @@ jupyter notebook analysis.ipynb
 
 4. Run all cells
 
+## 🌐 Live Demo
+👉 https://risheek-student-grade-predictor.streamlit.app/
+
 ## 👨‍💻 Author
 
 **Risheek Shrestha**
