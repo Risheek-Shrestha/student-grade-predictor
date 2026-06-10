@@ -29,6 +29,9 @@ if "predicted" not in st.session_state:
 if "prediction_data" not in st.session_state:
     st.session_state.prediction_data = {}
 
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
+
 # ==========================================
 # CSS
 # ==========================================
@@ -275,12 +278,37 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# STATE 1 — INPUT FORM
+# NAVIGATION
 # ==========================================
 
-if not st.session_state.predicted:
+pages = ["Home", "Predict", "Model Comparison"]
 
-    # Model stats
+col_nav1, col_nav2, col_nav3 = st.columns(3)
+with col_nav1:
+    if st.button("🏠 Home"):
+        st.session_state.page = "Home"
+        st.session_state.predicted = False
+        st.rerun()
+with col_nav2:
+    if st.button("🔮 Predict"):
+        st.session_state.page = "Predict"
+        st.session_state.predicted = False
+        st.rerun()
+with col_nav3:
+    if st.button("📊 Model Comparison"):
+        st.session_state.page = "Model Comparison"
+        st.rerun()
+
+page = st.session_state.page
+
+st.markdown("---")
+
+# ==========================================
+# PAGE: HOME
+# ==========================================
+
+if page == "Home":
+
     st.markdown("""
     <div class="stats-row">
         <div class="stat-box"><div class="stat-value">0.83</div><div class="stat-label">R² Score</div></div>
@@ -289,249 +317,311 @@ if not st.session_state.predicted:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-label">📝 Academic Grades</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">📖 About This App</div>', unsafe_allow_html=True)
+    st.markdown("""
+    This app uses a **Random Forest** model trained on the UCI Student Performance Dataset
+    to predict a student's final grade (G3) based on academic and family background features.
 
-    col1, col2 = st.columns(2)
-    with col1:
-        g1 = st.slider("G1 — First Period Grade", 0, 20, 10)
-    with col2:
-        g2 = st.slider("G2 — Second Period Grade", 0, 20, 10)
+    - **G1 & G2** — First and second period grades are the strongest predictors
+    - **Study Time** — Weekly hours dedicated to studying
+    - **Past Failures** — Number of previously failed courses
+    - **Parental Education** — Mother's and father's education level
 
-    st.markdown('<div class="section-label">📚 Study Habits</div>', unsafe_allow_html=True)
+    Navigate to **Predict** to get a grade prediction, or **Model Comparison** to see how
+    different models performed during training.
+    """)
 
-    col3, col4 = st.columns(2)
-    with col3:
-        studytime = st.selectbox(
-            "Weekly Study Time",
-            options=[1, 2, 3, 4],
-            format_func=lambda x: {
-                1: "1 — Less than 2 hrs/week",
-                2: "2 — 2 to 5 hrs/week",
-                3: "3 — 5 to 10 hrs/week",
-                4: "4 — More than 10 hrs/week"
-            }[x]
-        )
-    with col4:
-        failures = st.selectbox(
-            "Number of Past Failures",
-            options=[0, 1, 2, 3, 4],
-            format_func=lambda x: f"{x} failure{'s' if x != 1 else ''}"
-        )
+# ==========================================
+# PAGE: PREDICT
+# ==========================================
 
-    st.markdown('<div class="section-label">👨‍👩‍👦 Family Background</div>', unsafe_allow_html=True)
+elif page == "Predict":
 
-    edu_labels = {
-        0: "0 — No education",
-        1: "1 — Primary school",
-        2: "2 — Middle school",
-        3: "3 — Secondary school",
-        4: "4 — Higher education"
-    }
+    if not st.session_state.predicted:
 
-    col5, col6 = st.columns(2)
-    with col5:
-        medu = st.selectbox("Mother's Education", options=[0,1,2,3,4],
-                            format_func=lambda x: edu_labels[x])
-    with col6:
-        fedu = st.selectbox("Father's Education", options=[0,1,2,3,4],
-                            format_func=lambda x: edu_labels[x])
+        st.markdown("""
+        <div class="stats-row">
+            <div class="stat-box"><div class="stat-value">0.83</div><div class="stat-label">R² Score</div></div>
+            <div class="stat-box"><div class="stat-value">1.11</div><div class="stat-label">MAE</div></div>
+            <div class="stat-box"><div class="stat-value">395</div><div class="stat-label">Students</div></div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown('<div class="section-label">📝 Academic Grades</div>', unsafe_allow_html=True)
 
-    if st.button("🚀 Predict Final Grade"):
-        # Save to session state
-        st.session_state.predicted = True
-        st.session_state.prediction_data = {
-            "g1": g1, "g2": g2,
-            "studytime": studytime,
-            "failures": failures,
-            "medu": medu, "fedu": fedu
+        col1, col2 = st.columns(2)
+        with col1:
+            g1 = st.slider("G1 — First Period Grade", 0, 20, 10)
+        with col2:
+            g2 = st.slider("G2 — Second Period Grade", 0, 20, 10)
+
+        st.markdown('<div class="section-label">📚 Study Habits</div>', unsafe_allow_html=True)
+
+        col3, col4 = st.columns(2)
+        with col3:
+            studytime = st.selectbox(
+                "Weekly Study Time",
+                options=[1, 2, 3, 4],
+                format_func=lambda x: {
+                    1: "1 — Less than 2 hrs/week",
+                    2: "2 — 2 to 5 hrs/week",
+                    3: "3 — 5 to 10 hrs/week",
+                    4: "4 — More than 10 hrs/week"
+                }[x]
+            )
+        with col4:
+            failures = st.selectbox(
+                "Number of Past Failures",
+                options=[0, 1, 2, 3, 4],
+                format_func=lambda x: f"{x} failure{'s' if x != 1 else ''}"
+            )
+
+        st.markdown('<div class="section-label">👨‍👩‍👦 Family Background</div>', unsafe_allow_html=True)
+
+        edu_labels = {
+            0: "0 — No education",
+            1: "1 — Primary school",
+            2: "2 — Middle school",
+            3: "3 — Secondary school",
+            4: "4 — Higher education"
         }
-        st.rerun()
 
-# ==========================================
-# STATE 2 — RESULTS
-# ==========================================
+        col5, col6 = st.columns(2)
+        with col5:
+            medu = st.selectbox("Mother's Education", options=[0,1,2,3,4],
+                                format_func=lambda x: edu_labels[x])
+        with col6:
+            fedu = st.selectbox("Father's Education", options=[0,1,2,3,4],
+                                format_func=lambda x: edu_labels[x])
 
-else:
+        st.markdown("<br>", unsafe_allow_html=True)
 
-    # Retrieve saved inputs
-    d = st.session_state.prediction_data
-    g1 = d["g1"]; g2 = d["g2"]
-    studytime = d["studytime"]; failures = d["failures"]
-    medu = d["medu"]; fedu = d["fedu"]
-
-    # Predict
-    input_data = np.array([[g2, g1, failures, studytime, medu, fedu]])
-    prediction = round(float(model.predict(input_data)[0]), 2)
-    percentage = min(int((prediction / 20) * 100), 100)
-
-    # Grade classification
-    if prediction >= 16:
-        grade_letter = "A"
-        risk_label = "Low Risk"
-        risk_class = "badge-low"
-        feedback_class = "feedback-success"
-        feedback_msg = "🎉 Excellent! This student is predicted to perform exceptionally well. Keep up the great work and maintain consistency heading into the final exam."
-        show_balloons = True
-    elif prediction >= 14:
-        grade_letter = "B"
-        risk_label = "Low Risk"
-        risk_class = "badge-low"
-        feedback_class = "feedback-success"
-        feedback_msg = "✅ Good performance predicted. The student shows strong academic ability. A little extra revision could push this to an A."
-        show_balloons = False
-    elif prediction >= 10:
-        grade_letter = "C"
-        risk_label = "Medium Risk"
-        risk_class = "badge-medium"
-        feedback_class = "feedback-warning"
-        feedback_msg = "⚠️ Average performance predicted. The student would benefit from increasing study time and addressing any gaps from G1 and G2."
-        show_balloons = False
-    else:
-        grade_letter = "D"
-        risk_label = "High Risk"
-        risk_class = "badge-high"
-        feedback_class = "feedback-error"
-        feedback_msg = "🚨 Low performance predicted. Immediate academic support is recommended. Focus on reducing absences and addressing past failures."
-        show_balloons = False
-
-    # Result card
-    st.markdown(f"""
-    <div class="result-card">
-        <p class="result-grade">{prediction}</p>
-        <p class="result-label">Predicted Final Grade (G3) out of 20</p>
-        <div class="result-badges">
-            <span class="badge badge-grade">Grade {grade_letter}</span>
-            <span class="badge {risk_class}">{risk_label}</span>
-            <span class="badge badge-grade">{percentage}% Performance</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Feedback
-    st.markdown(f"""
-    <div class="feedback-box {feedback_class}">
-        {feedback_msg}
-    </div>
-    """, unsafe_allow_html=True)
-
-    if show_balloons:
-        st.balloons()
-
-    # Charts
-    st.markdown('<div class="section-label">📊 Visual Analysis</div>', unsafe_allow_html=True)
-
-    chart_left, chart_right = st.columns([1, 1])
-
-    with chart_left:
-        gauge = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=prediction,
-            title={"text": "Grade Score", "font": {"color": "#9ca3af", "size": 14}},
-            number={"font": {"color": "white", "size": 36}},
-            gauge={
-                "axis": {"range": [0, 20], "tickcolor": "#374151",
-                         "tickfont": {"color": "#6b7280"}},
-                "bar": {"color": "#6366f1", "thickness": 0.3},
-                "bgcolor": "rgba(0,0,0,0)",
-                "borderwidth": 0,
-                "steps": [
-                    {"range": [0, 8],  "color": "#450a0a"},
-                    {"range": [8, 12], "color": "#431407"},
-                    {"range": [12, 16], "color": "#14532d"},
-                    {"range": [16, 20], "color": "#166534"}
-                ],
-                "threshold": {
-                    "line": {"color": "#818cf8", "width": 3},
-                    "thickness": 0.8,
-                    "value": prediction
-                }
+        if st.button("🚀 Predict Final Grade"):
+            st.session_state.predicted = True
+            st.session_state.prediction_data = {
+                "g1": g1, "g2": g2,
+                "studytime": studytime,
+                "failures": failures,
+                "medu": medu, "fedu": fedu
             }
-        ))
-        gauge.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font={"color": "white"},
-            height=260,
-            margin=dict(t=40, b=20, l=30, r=30)
-        )
-        st.plotly_chart(gauge, use_container_width=True)
+            st.rerun()
 
-    with chart_right:
-        radar = go.Figure()
-        radar.add_trace(go.Scatterpolar(
-            r=[g1, g2, studytime * 5, max((4 - failures) * 5, 0), medu * 5, fedu * 5],
-            theta=["G1", "G2", "Study Time", "No Failures", "Mother Edu", "Father Edu"],
-            fill="toself",
-            fillcolor="rgba(99,102,241,0.2)",
-            line=dict(color="#818cf8", width=2),
-        ))
-        radar.update_layout(
-            polar=dict(
-                bgcolor="rgba(0,0,0,0)",
-                radialaxis=dict(
-                    visible=True, range=[0, 20],
-                    tickcolor="#374151",
-                    gridcolor="rgba(255,255,255,0.08)",
-                    tickfont={"color": "#6b7280", "size": 9}
+    else:
+
+        d = st.session_state.prediction_data
+        g1 = d["g1"]; g2 = d["g2"]
+        studytime = d["studytime"]; failures = d["failures"]
+        medu = d["medu"]; fedu = d["fedu"]
+
+        input_data = np.array([[g2, g1, failures, studytime, medu, fedu]])
+        prediction = round(float(model.predict(input_data)[0]), 2)
+        percentage = min(int((prediction / 20) * 100), 100)
+
+        if prediction >= 16:
+            grade_letter = "A"
+            risk_label = "Low Risk"
+            risk_class = "badge-low"
+            feedback_class = "feedback-success"
+            feedback_msg = "🎉 Excellent! This student is predicted to perform exceptionally well. Keep up the great work and maintain consistency heading into the final exam."
+            show_balloons = True
+        elif prediction >= 14:
+            grade_letter = "B"
+            risk_label = "Low Risk"
+            risk_class = "badge-low"
+            feedback_class = "feedback-success"
+            feedback_msg = "✅ Good performance predicted. The student shows strong academic ability. A little extra revision could push this to an A."
+            show_balloons = False
+        elif prediction >= 10:
+            grade_letter = "C"
+            risk_label = "Medium Risk"
+            risk_class = "badge-medium"
+            feedback_class = "feedback-warning"
+            feedback_msg = "⚠️ Average performance predicted. The student would benefit from increasing study time and addressing any gaps from G1 and G2."
+            show_balloons = False
+        else:
+            grade_letter = "D"
+            risk_label = "High Risk"
+            risk_class = "badge-high"
+            feedback_class = "feedback-error"
+            feedback_msg = "🚨 Low performance predicted. Immediate academic support is recommended. Focus on reducing absences and addressing past failures."
+            show_balloons = False
+
+        st.markdown(f"""
+        <div class="result-card">
+            <p class="result-grade">{prediction}</p>
+            <p class="result-label">Predicted Final Grade (G3) out of 20</p>
+            <div class="result-badges">
+                <span class="badge badge-grade">Grade {grade_letter}</span>
+                <span class="badge {risk_class}">{risk_label}</span>
+                <span class="badge badge-grade">{percentage}% Performance</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="feedback-box {feedback_class}">
+            {feedback_msg}
+        </div>
+        """, unsafe_allow_html=True)
+
+        if show_balloons:
+            st.balloons()
+
+        st.markdown('<div class="section-label">📊 Visual Analysis</div>', unsafe_allow_html=True)
+
+        chart_left, chart_right = st.columns([1, 1])
+
+        with chart_left:
+            gauge = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=prediction,
+                title={"text": "Grade Score", "font": {"color": "#9ca3af", "size": 14}},
+                number={"font": {"color": "white", "size": 36}},
+                gauge={
+                    "axis": {"range": [0, 20], "tickcolor": "#374151",
+                             "tickfont": {"color": "#6b7280"}},
+                    "bar": {"color": "#6366f1", "thickness": 0.3},
+                    "bgcolor": "rgba(0,0,0,0)",
+                    "borderwidth": 0,
+                    "steps": [
+                        {"range": [0, 8],   "color": "#450a0a"},
+                        {"range": [8, 12],  "color": "#431407"},
+                        {"range": [12, 16], "color": "#14532d"},
+                        {"range": [16, 20], "color": "#166534"}
+                    ],
+                    "threshold": {
+                        "line": {"color": "#818cf8", "width": 3},
+                        "thickness": 0.8,
+                        "value": prediction
+                    }
+                }
+            ))
+            gauge.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font={"color": "white"},
+                height=260,
+                margin=dict(t=40, b=20, l=30, r=30)
+            )
+            st.plotly_chart(gauge, use_container_width=True)
+
+        with chart_right:
+            radar = go.Figure()
+            radar.add_trace(go.Scatterpolar(
+                r=[g1, g2, studytime * 5, max((4 - failures) * 5, 0), medu * 5, fedu * 5],
+                theta=["G1", "G2", "Study Time", "No Failures", "Mother Edu", "Father Edu"],
+                fill="toself",
+                fillcolor="rgba(99,102,241,0.2)",
+                line=dict(color="#818cf8", width=2),
+            ))
+            radar.update_layout(
+                polar=dict(
+                    bgcolor="rgba(0,0,0,0)",
+                    radialaxis=dict(
+                        visible=True, range=[0, 20],
+                        tickcolor="#374151",
+                        gridcolor="rgba(255,255,255,0.08)",
+                        tickfont={"color": "#6b7280", "size": 9}
+                    ),
+                    angularaxis=dict(
+                        tickcolor="#374151",
+                        gridcolor="rgba(255,255,255,0.08)",
+                        tickfont={"color": "#9ca3af", "size": 11}
+                    )
                 ),
-                angularaxis=dict(
-                    tickcolor="#374151",
-                    gridcolor="rgba(255,255,255,0.08)",
-                    tickfont={"color": "#9ca3af", "size": 11}
-                )
-            ),
-            paper_bgcolor="rgba(0,0,0,0)",
-            font={"color": "white"},
-            showlegend=False,
-            height=260,
-            margin=dict(t=30, b=30, l=40, r=40)
-        )
-        st.plotly_chart(radar, use_container_width=True)
+                paper_bgcolor="rgba(0,0,0,0)",
+                font={"color": "white"},
+                showlegend=False,
+                height=260,
+                margin=dict(t=30, b=30, l=40, r=40)
+            )
+            st.plotly_chart(radar, use_container_width=True)
 
-    # Input Summary
-    st.markdown('<div class="section-label">📋 Input Summary</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-label">📋 Input Summary</div>', unsafe_allow_html=True)
 
-    study_map = {1: "<2 hrs/week", 2: "2–5 hrs/week", 3: "5–10 hrs/week", 4: ">10 hrs/week"}
-    edu_map = {0: "None", 1: "Primary", 2: "Middle School", 3: "Secondary", 4: "Higher Education"}
+        study_map = {1: "<2 hrs/week", 2: "2–5 hrs/week", 3: "5–10 hrs/week", 4: ">10 hrs/week"}
+        edu_map = {0: "None", 1: "Primary", 2: "Middle School", 3: "Secondary", 4: "Higher Education"}
 
-    st.markdown(f"""
-    <div class="summary-grid">
-        <div class="summary-item">
-            <div class="summary-item-label">First Period Grade</div>
-            <div class="summary-item-value">{g1} / 20</div>
+        st.markdown(f"""
+        <div class="summary-grid">
+            <div class="summary-item">
+                <div class="summary-item-label">First Period Grade</div>
+                <div class="summary-item-value">{g1} / 20</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-item-label">Second Period Grade</div>
+                <div class="summary-item-value">{g2} / 20</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-item-label">Study Time</div>
+                <div class="summary-item-value">{study_map[studytime]}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-item-label">Past Failures</div>
+                <div class="summary-item-value">{failures}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-item-label">Mother's Education</div>
+                <div class="summary-item-value">{edu_map[medu]}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-item-label">Father's Education</div>
+                <div class="summary-item-value">{edu_map[fedu]}</div>
+            </div>
         </div>
-        <div class="summary-item">
-            <div class="summary-item-label">Second Period Grade</div>
-            <div class="summary-item-value">{g2} / 20</div>
-        </div>
-        <div class="summary-item">
-            <div class="summary-item-label">Study Time</div>
-            <div class="summary-item-value">{study_map[studytime]}</div>
-        </div>
-        <div class="summary-item">
-            <div class="summary-item-label">Past Failures</div>
-            <div class="summary-item-value">{failures}</div>
-        </div>
-        <div class="summary-item">
-            <div class="summary-item-label">Mother's Education</div>
-            <div class="summary-item-value">{edu_map[medu]}</div>
-        </div>
-        <div class="summary-item">
-            <div class="summary-item-label">Father's Education</div>
-            <div class="summary-item-value">{edu_map[fedu]}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
 
-    # Back button
-    if st.button("← Predict Again"):
-        st.session_state.predicted = False
-        st.session_state.prediction_data = {}
-        st.rerun()
+        if st.button("← Predict Again"):
+            st.session_state.predicted = False
+            st.session_state.prediction_data = {}
+            st.rerun()
+
+# ==========================================
+# PAGE: MODEL COMPARISON
+# ==========================================
+
+elif page == "Model Comparison":
+
+    st.markdown('<div class="section-label">📊 Model Comparison</div>', unsafe_allow_html=True)
+    st.markdown("Performance of different models trained on the UCI Student Performance Dataset.")
+
+    models_list = ["Random Forest", "Random Forest (Tuned)", "XGBoost"]
+    mae_scores = [1.11, 1.37, 1.35]
+    r2_scores = [0.83, 0.77, 0.76]
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        name="R² Score (higher is better)",
+        x=models_list,
+        y=r2_scores,
+        marker_color=["#00CC96", "#EF553B", "#636EFA"]
+    ))
+    fig.update_layout(
+        title="R² Score by Model",
+        yaxis=dict(range=[0, 1]),
+        template="plotly_dark",
+        height=400
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    fig2 = go.Figure()
+    fig2.add_trace(go.Bar(
+        name="MAE (lower is better)",
+        x=models_list,
+        y=mae_scores,
+        marker_color=["#00CC96", "#EF553B", "#636EFA"]
+    ))
+    fig2.update_layout(
+        title="Mean Absolute Error by Model",
+        template="plotly_dark",
+        height=400
+    )
+    st.plotly_chart(fig2, use_container_width=True)
+
+    st.markdown('<div class="section-label">🏆 Verdict</div>', unsafe_allow_html=True)
+    st.success("Random Forest with default settings performs best on this dataset with R² = 0.83 and MAE = 1.11. GridSearchCV and XGBoost both underperformed, which is typical for small tabular datasets.")
 
 # ==========================================
 # FOOTER
